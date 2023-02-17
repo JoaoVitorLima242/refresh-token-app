@@ -1,24 +1,31 @@
 import { useForm } from 'react-hook-form'
 import Form from 'react-bootstrap/Form';
-import { Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Alert, Button } from 'react-bootstrap';
+import { Link, useHistory } from 'react-router-dom';
+import { api } from '../api';
+import { useContext, useState } from 'react';
+import AuthContext from '../context/auth';
 
 function SignUp() {
     const {register, handleSubmit} = useForm()
+    const history = useHistory()
+    const [error, setError] = useState(null)
+    const { setAuth } = useContext(AuthContext)
 
-    const onSubmit = (data) => {
-        console.log(data)
+    const onSubmit = async (data) => {
+        await api.post('/auth/signup', data)
+            .then(res => {
+                localStorage.setItem('tokenRT', res.data.refreshToken)
+                history.push('user')
+                setAuth(res)
+            })
+            .catch(e => setError(e.response.data.error))
     }
 
     return (
       <div className='container'>
         <Form 
-            style={{
-                maxWidth: '500px',
-                margin: '30px auto',
-                border: 'solid 1px #ccc',
-                padding: '30px'
-            }}
+            className='card'
             onSubmit={handleSubmit(onSubmit)}
         >
             <h1>Sign Up</h1>
@@ -37,6 +44,11 @@ function SignUp() {
             <div className='mt-4'>
                 <Link to='/login'>Go to Log In</Link>
             </div>
+            {   error &&
+                <Alert variant='danger' className='mt-4'>
+                    {error}
+                </Alert>
+            }
         </Form>
       </div>
     );
